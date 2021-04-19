@@ -4,7 +4,7 @@
 1. Learn how to leverage type parameters to write fewer and more efficients tests.
 1. Recognize when to split arguments of a function (currying) in order to improve type inference.
 
-## New Scala features
+## New Scala features introduced in this section
 1. Transform warning into errors using a compiler option ([video](https://www.fp-tower.com/courses/take/foundations/lessons/14834159-generic-functions-part-2) at 03:00).
 1. Scala Worksheets to experiment with an API ([video](https://www.fp-tower.com/courses/take/foundations/lessons/14913605-exercise-1-pair) at 09:41). 
 1. Methods used as infix operators ([video](https://www.fp-tower.com/courses/take/foundations/lessons/15034868-exercise-2-predicate) at 01:42).

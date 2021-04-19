@@ -18,49 +18,59 @@ object GenericFunctionExercises {
     // 1a. Implement `swap` which exchanges `first` and `second`
     // such as Pair("John", "Doe").swap == Pair("Doe", "John")
     def swap: Pair[A] =
-      ???
+      Pair(second, first)
 
     // 1b. Implement `map` which applies a function to `first` and `second`
     // such as Pair("John", "Doe").map(_.length) == Pair(4,3)
     def map[To](update: A => To): Pair[To] =
-      ???
+      Pair(update(first), update(second))
 
     // 1c. Implement `zipWith` which merges two Pairs using a `combine` function
     // such as Pair(0, 2).zipWith(Pair(3, 4))((x, y) => x + y) == Pair(3, 6)
     //         Pair(2, 3).zipWith(Pair("Hello ", "World "))(replicate) == Pair("Hello Hello ", "World World World ")
     // Bonus: Why did we separate the arguments of `zipWith` into two set of parentheses?
     def zipWith[Other, To](other: Pair[Other])(combine: (A, Other) => To): Pair[To] =
-      ???
+      Pair(combine(first, other.first), combine(second, other.second))
+
+    //////////////////////////////////////////////
+    // Bonus question (not covered by the video)
+    //////////////////////////////////////////////
+
+    // 1f. Can you implement a method on `Pair` similar to `zipWith`, but that combines 3
+    // Pairs instead of 2? If yes, can you implement this method using `zipWith`?
+    // Note: Libraries often call this method `map3` and `zipWith` is often called `map2`
+    // such as Pair(0, 1).map3(Pair(2, 3), Pair(4, 5)((x, y, z) => x + y + z) == Pair(6, 9)
+    // Pair(0, 1).zipWith(Pair(2, 3)) => Pair(combine(0, 2), combine(1, 3))
+    //
+    def map3[Other1, Other2, To](other1: Pair[Other1], other2: Pair[Other2])(combine: (A, Other1, Other2) => To): Pair[To] =
+      zipWith(other1)((_, _)) // Pair[(A, Other1)]
+        .zipWith(other2) {
+          case ((a, b), c) => combine(a, b, c)
+        }
   }
 
-  // 1d. Use the Pair API to decode the content of `secret`.
-  // Note: You can transform a Byte into a Char using `byte.toChar`
-  //       or you can create a String from an Array[Byte] using `new String(byteArray)`
-  // Note: You can remove the lazy keyword from `decoded` once you have implemented it.
-  val secret: Pair[List[Byte]] =
+    // 1d. Use the Pair API to decode the content of `secret`.
+    // Note: You can transform a Byte into a Char using `byte.toChar`
+    //       or you can create a String from an Array[Byte] using `new String(byteArray)`
+    // Note: You can remove the lazy keyword from `decoded` once you have implemented it.
+    val secret: Pair[List[Byte]] =
     Pair(
       first = List(103, 110, 105, 109, 109, 97, 114, 103, 111, 114, 80),
       second = List(108, 97, 110, 111, 105, 116, 99, 110, 117, 70)
     )
-  lazy val decoded: Pair[String] = ???
+    val decoded: Pair[String] = secret.map(bytes => new String(bytes.toArray).reverse).swap
 
-  // 1e. Use the Pair API to combine `productNames` and `productPrices` into `products`
-  // such as products == Pair(Product("Coffee", 2.5), Product("Plane ticket", 329.99))
-  case class Product(name: String, price: Double)
+    // 1e. Use the Pair API to combine `productNames` and `productPrices` into `products`
+    // such as products == Pair(Product("Coffee", 2.5), Product("Plane ticket", 329.99))
+    case class Product(name: String, price: Double)
 
-  val productNames: Pair[String]  = Pair("Coffee", "Plane ticket")
-  val productPrices: Pair[Double] = Pair(2.5, 329.99)
+    val productNames: Pair[String] = Pair("Coffee", "Plane ticket")
+    val productPrices: Pair[Double] = Pair(2.5, 329.99)
 
-  lazy val products: Pair[Product] =
-    ???
-
-  //////////////////////////////////////////////
-  // Bonus question (not covered by the video)
-  //////////////////////////////////////////////
-
-  // 1f. Can you implement a method on `Pair` similar to `zipWith`, but that combines 3
-  // Pairs instead of 2? If yes, can you implement this method using `zipWith`?
-  // Note: Libraries often call this method `map3` and `zipWith` is often called `map2`
+    lazy val products: Pair[Product] =
+      productNames.zipWith(productPrices)(Product)
+    // although not needed in this particular exercise, currying is used here for type inference in some scenarios
+    // ex: productPrices.zipWith(productPrices)(List(_, _))
 
   ////////////////////////////
   // Exercise 2: Predicate
@@ -86,7 +96,7 @@ object GenericFunctionExercises {
     //         (isEven && isPositive)(-4) == false
     //         (isEven && isPositive)(-7) == false
     def &&(other: Predicate[A]): Predicate[A] =
-      ???
+      Predicate(value => eval(value) && other.eval(value))
 
     // 2b. Implement `||` that combines two predicates using logical or
     // such as (isEven || isPositive)(12) == true
@@ -94,12 +104,20 @@ object GenericFunctionExercises {
     //         (isEven || isPositive)(-4) == true
     // but     (isEven || isPositive)(-7) == false
     def ||(other: Predicate[A]): Predicate[A] =
-      ???
+      Predicate(value => eval(value) || other.eval(value))
 
     // 2c. Implement `flip` that reverses a predicate
     // such as isEven.flip(11) == true
     def flip: Predicate[A] =
-      ???
+      Predicate(value => !eval(value))
+
+    def contramap[To](zoom: To => A): Predicate[To] =
+      Predicate(user => eval(zoom(user)))
+  }
+
+  object Predicate {
+    def False[A]: Predicate[A] = Predicate(_ => false)
+    def True[A]: Predicate[A] = Predicate(_ => true)
   }
 
   // 2d. Implement `isValidUser`, a predicate which checks if a `User` is:
@@ -115,7 +133,33 @@ object GenericFunctionExercises {
   case class User(name: String, age: Int)
 
   lazy val isValidUser: Predicate[User] =
-    ???
+    byUser(_.age)(isAtLeast(18)) &&
+    byUser(_.name)(isLongerThan(3) && isCapitalized)
+
+  def isAtLeast(min: Int): Predicate[Int] =
+    Predicate(_ >= min)
+
+  def isLongerThan(min: Int): Predicate[String] =
+    isAtLeast(min).contramap(_.length)
+
+  val isCapitalized: Predicate[String] =
+    Predicate(text => text.capitalize == text)
+
+  def byUser[To](zoom: User => To)(subPredicate: Predicate[To]): Predicate[User] =
+    subPredicate.contramap(zoom)
+
+  // possible workaround for partial type inference issue
+
+  class ByPartiallyApplied[From] {
+    def apply[To](zoom: From => To)(predicate: Predicate[To]): Predicate[From] =
+      predicate.contramap(zoom)
+  }
+
+  def by[From]: ByPartiallyApplied[From] = new ByPartiallyApplied[From] {}
+
+  lazy val isValidUser2: Predicate[User] =
+    by[User](_.age)(isAtLeast(18)) &&
+      by[User](_.name)(isLongerThan(3) && isCapitalized)
 
   ////////////////////////////
   // Exercise 3: JsonDecoder
